@@ -25,7 +25,7 @@ class Web::Scraper {
   };
 
   method handler ($tag, %val, @elems) {
-    my $flag; # flags can be [] for array, 
+    my $flag; # flags can be [] for array,
     my $atag;
     my @o;
     my $o;
@@ -42,14 +42,14 @@ class Web::Scraper {
           my %push;
           my $spush;
           my $skipflag = 0;
-          for $v.kv -> $k, $v {
-            my $rval = $.grab($e, $v);
+          for $v.kv -> $key, $value {
+            my $rval = $.grab($e, $value);
             $skipflag = 1, last if Any ~~ $rval;
-            %push{$k} = $rval          if $flag eq 'A';
-            $spush    = "$k=$rval\n" if $flag ne 'A';
+            %push{$key} = $rval          if $flag eq 'A';
+            $spush    = "$key=$rval\n" if $flag ne 'A';
           }
           next if $skipflag == 1;
-          %.d{$atag}.push($(%push)) if $flag eq 'A';
+          %.d{$atag}.push(%push) if $flag eq 'A';
           %.d{$atag} ~= "$spush" if $flag ne 'A';
         }
       } elsif $v ~~ Callable {
@@ -111,16 +111,16 @@ class Web::Scraper {
 
     my $*dynself = self;
     my proto resource (Web::Scraper $scraperbike, %d2) is export {
-      my $self = $*Outer::dynself;
-      my $f    = $self.ctx.(%d2.keys[0]).elems[0];
+      my $self = $*dynself;
+      my $f    = $self.ctx.(%d2.keys[0]).elements[0];
       my $v    = $self.grab($f, %d2.values[0]);
       $scraperbike.scrape($v);
       $self.d{$scraperbike.d.keys} = @($scraperbike.d.values);
     };
     my proto process ($d1, %d2) is export {
-      my $self  = $*Outer::dynself;
+      my $self  = $*dynself;
       if %d2.values[0].can('scrape') {
-        my @elems = $self.ctx.($d1).elems.clone;
+        my @elems = $self.ctx.($d1).elements.clone;
         my $atag = %d2.keys[0];
         my $flag = '';
         $flag = 'A' if $atag ~~ m{ '[]' $ } ;
@@ -133,7 +133,7 @@ class Web::Scraper {
           %.d{$atag}.push( $(%d2.values[0].d.clone) ) if $flag eq 'A';
         }
       } else {
-        my @elems = $self.ctx.($d1).elems;
+        my @elems = $self.ctx.($d1).elements;
         $self.handler($d1, %d2, @elems);
       }
     }
